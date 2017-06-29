@@ -1,37 +1,24 @@
-const cacheName = "akari-lrc-maker-2017.05.01-10";
-const urlsToCache = [
-  "./",
-  "dist/app.css",
-  "dist/React.js",
-  "dist/ReactDOM.js",
-  "dist/app.js"
-];
-
-self.addEventListener("install", e => {
-  e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(urlsToCache)));
-});
+/**
+ * Created by 阿卡琳 on 01/07/2017.
+ */
+"use strict";
+const APP_NAME = "akari-lrc-maker";
 
 self.addEventListener("activate", e => {
-  e.waitUntil(
-    caches.keys().then(keyList =>
-      Promise.all(
-        keyList.map(key => {
-          if (key.startsWith("akari-lrc-maker-") && key !== cacheName) {
-            return caches.delete(key);
-          }
-        })
-      ))
-  );
+  e.waitUntil(self.clients.claim());
 });
 
-// self.addEventListener("fetch", event => {
-//   event.respondWith(
-//     caches.match(event.request).then(response => {
-//       // Cache hit - return response
-//       if (response) {
-//         return response;
-//       }
-//       return fetch(event.request);
-//     })
-//   );
-// });
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.open(APP_NAME).then(cache => {
+      return fetch(event.request)
+        .then(response => {
+          cache.put(event.request, response.clone());
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        });
+    })
+  );
+});
